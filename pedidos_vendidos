@@ -1,0 +1,42 @@
+--  Visualização analítica
+CREATE OR REPLACE VIEW  VW_VENDAS_PAINEL AS
+SELECT
+    to_char(item.dt_item, 'MM/YYYY') periodo
+    , CASE        
+        WHEN ped.cd_representant IN('055','028','098') then 'JOZIETTE'        
+        WHEN ped.cd_representant IN('140','141') THEN 'POLLIANA'
+        WHEN ped.cd_representant IN('142','019','095') AND CLI.UF IN('TO') THEN 'LARYSSA'
+        WHEN ped.cd_representant IN('121','019') AND CLI.UF IN('MA','PA')  THEN 'MALENA'
+        WHEN ped.cd_representant IN('099','074') THEN 'VICTOR'
+        WHEN ped.cd_representant IN('106','122','128') THEN 'BIANCA'
+        WHEN ped.cd_representant IN('002154','068','007','009','010','012','021','024','025','031','061','097','104','109','111','115','31053','002154','31030','090','004124') AND ped.colecao <> 'AÇO MA' THEN 'SERGIO'
+        WHEN ped.cd_representant IN('144','004124','024', '134','057','136', '124', '092', '060', '004123', '145', '040', '110','137', 
+                                '31032', '031','31023', '139', '131', '143', '104', '034', '151', '123', '138',
+                                '119', '021', '31047', '31038', '090', '31008', '31033', '31006', '048', '007', '31026', 
+                                '31044', '126', '097', '31053', '31035', '105', '109','31011', '400002', '31010', '31030', 
+                                '400003', '129', '111', '31041','31036', '132', '127', '146','004124') AND ped.colecao = 'AÇO MA' THEN 'JESSICA'
+        WHEN ped.cd_representant IN('000895','300001') THEN 'MARCIA'
+        WHEN ped.cd_representant IN('149','152','107','061') OR cli.nome_completo LIKE 'GERDAU%' THEN 'STHEFFANY'
+        WHEN ped.cd_representant IN('020') THEN 'KEZIA'
+        WHEN ped.cd_representant IN('013','095','300003','00417') THEN 'ANDRESSA'
+        WHEN ped.cd_representant IN('042') THEN 'VENDAS CONTRATO DAP' 
+    END VENDEDOR
+    , sum(item.vl_total_item_l + item.vl_ipi) VENDIDO    
+    
+FROM fapedido ped
+INNER JOIN faitempe item ON item.cd_pedido = ped.cd_pedido
+INNER JOIN geempres ven ON ven.cd_empresa = item.cd_empresa
+INNER JOIN geempres cli ON cli.cd_empresa = item.cd_empresa
+    WHERE item.dt_item > '01/01/2022'        
+    AND item.cd_especie = 'R' 
+    AND item.controle NOT IN('00','12','90')     
+    GROUP BY ped.cd_representant, ITEM.DT_ITEM, CLI.UF, CLI.NOME_COMPLETO, PED.COLECAO;
+   
+-- Visualização sintetica
+ CREATE OR REPLACE VIEW VW_VENDAS_PAINEL_RESUMO AS
+ SELECT 
+ PERIODO,
+ VENDEDOR,
+ SUM(VENDIDO) vendido
+ FROM VW_VENDAS_PAINEL
+ GROUP BY PERIODO, VENDEDOR;  

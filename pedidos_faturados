@@ -1,0 +1,43 @@
+CREATE OR REPLACE VIEW VW_FAT_PAINEL AS
+-- PAINEL FATURAMENTO
+SELECT TO_CHAR(fat.dt_emissao,  'MM/YYYY') data
+
+    , CASE        
+        WHEN fat.cd_representant IN('055','028','098') then 'JOZIETTE'        
+        WHEN fat.cd_representant IN('140','141') THEN 'POLLIANA'
+        WHEN fat.cd_representant IN('142','019','095') AND CLI.UF IN('TO') THEN 'LARYSSA'
+        WHEN fat.cd_representant IN('121','019') AND CLI.UF IN('MA','PA')  THEN 'MALENA'
+        WHEN fat.cd_representant IN('099','074') THEN 'VICTOR'
+        WHEN fat.cd_representant IN('106','122','128') THEN 'BIANCA'
+        WHEN fat.cd_representant IN('002154','068','007','009','010','012','021','024','025','031','061','097','104','109','111','115','31053','002154','31030','090','004124') AND ped.colecao <> 'AÇO MA' THEN 'SERGIO'
+        WHEN fat.cd_representant IN('144','004124','024', '134','057','136', '124', '092', '060', '004123', '145', '040', '110','137', 
+                                '31032', '031','31023', '139', '131', '143', '104', '034', '151', '123', '138',
+                                '119', '021', '31047', '31038', '090', '31008', '31033', '31006', '048', '007', '31026', 
+                                '31044', '126', '097', '31053', '31035', '105', '109','31011', '400002', '31010', '31030', 
+                                '400003', '129', '111', '31041','31036', '132', '127', '146','004124') AND ped.colecao = 'AÇO MA' THEN 'JESSICA'
+        WHEN fat.cd_representant IN('000895','300001') THEN 'MARCIA'
+        WHEN fat.cd_representant IN('149','152','107','061') OR cli.nome_completo LIKE 'GERDAU%' THEN 'STHEFFANY'
+        WHEN fat.cd_representant IN('020') THEN 'KEZIA'
+        WHEN fat.cd_representant IN('013','095','300003','00417') THEN 'ANDRESSA'
+        WHEN fat.cd_representant IN('042') THEN 'VENDAS CONTRATO DAP' 
+    END VENDEDOR
+    , fat.cd_representant
+    , SUM(fat.total_faturado) FATURADO
+    
+FROM fanfisca fat
+INNER JOIN fapedido ped ON ped.cd_pedido = fat.cd_pedido
+INNER JOIN geempres rep ON rep.cd_empresa = fat.cd_representant
+LEFT  JOIN geempres cli ON cli.cd_empresa =  fat.cd_cliente
+WHERE fat.dt_emissao > '01/01/2022' 
+GROUP BY fat.dt_emissao, fat.cd_representant, CLI.UF, CLI.NOME_COMPLETO, PED.COLECAO;
+
+
+-- PAINEL FAT FINAL
+CREATE OR REPLACE VIEW VW_FAT_PAINEL_RESUMO AS
+SELECT 
+DATA,
+VENDEDOR,
+SUM(FATURADO) FATURADO
+FROM VW_FAT_PAINEL
+WHERE FATURADO <> 0 AND  VENDEDOR IS NOT NULL
+GROUP BY DATA, VENDEDOR ORDER BY DATA;
